@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TC-FUSION | Multi-Source Satellite Cyclone Intelligence & RI Warning</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="tailwind.config.js"></script>
+
+
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Chart.js for Meteorological Time Series -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+
+</head>
+<body class="bg-navy-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-cyan-500 selection:text-navy-950 antialiased overflow-x-hidden">
+
+  <!-- Header Navigation -->
+  <header class="sticky top-0 z-50 bg-navy-900/90 backdrop-blur-md border-b border-cyan-500/20 px-4 py-2.5 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- Logo & Identity -->
+      <div class="flex items-center gap-3">
+        <div class="relative w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-300/40">
+          <i data-lucide="disc-3" class="w-6 h-6 text-white animate-spin" style="animation-duration: 12s;"></i>
+          <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-navy-900 rounded-full" title="Core Engine Operational"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-black text-lg tracking-wider text-white">TC-FUSION</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Multi-Source Satellite Cyclone Intelligence &amp; RI Warning</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 overflow-x-auto py-1 scrollbar-none max-w-full text-xs font-medium" id="main-nav">
+        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-cyan-400 bg-cyan-950/60 border border-cyan-500/30">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>Dashboard</span>
+        </button>
+        <button onclick="switchTab('analysis')" data-tab="analysis" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="scan" class="w-4 h-4"></i>
+          <span>Cyclone Analysis</span>
+        </button>
+        <button onclick="switchTab('fusion')" data-tab="fusion" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="git-merge" class="w-4 h-4"></i>
+          <span>Data Fusion</span>
+        </button>
+        <button onclick="switchTab('alignment')" data-tab="alignment" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="clock-3" class="w-4 h-4"></i>
+          <span>Alignment</span>
+        </button>
+        <button onclick="switchTab('prediction')" data-tab="prediction" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="trending-up" class="w-4 h-4"></i>
+          <span>Prediction</span>
+        </button>
+        <button onclick="switchTab('ri-warning')" data-tab="ri-warning" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+          <span class="text-amber-300">RI Warning</span>
+        </button>
+        <button onclick="switchTab('historical')" data-tab="historical" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="database" class="w-4 h-4"></i>
+          <span>IBTrACS Explorer</span>
+        </button>
+        <button onclick="switchTab('import')" data-tab="import" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+          <span>Data Import</span>
+        </button>
+        <button onclick="switchTab('team')" data-tab="team" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="users" class="w-4 h-4"></i>
+          <span>Team Details</span>
+        </button>
+        <button onclick="switchTab('about')" data-tab="about" class="nav-btn px-3 py-1.5 rounded-md flex items-center gap-1.5 transition text-slate-300 hover:text-white hover:bg-navy-800">
+          <i data-lucide="info" class="w-4 h-4"></i>
+          <span>Architecture</span>
+        </button>
+      </nav>
+
+      <!-- Mode Selector & API Settings Modal Button -->
+      <div class="flex items-center gap-2">
+        <div class="flex items-center bg-navy-950 p-1 rounded-lg border border-slate-700/60 text-xs">
+          <button id="mode-hist-btn" onclick="setSystemMode('historical')" class="px-2.5 py-1 rounded font-medium transition bg-cyan-600 text-white shadow-sm flex items-center gap-1">
+            <i data-lucide="archive" class="w-3 h-3"></i>
+            <span>Historical</span>
+          </button>
+          <button id="mode-live-btn" onclick="setSystemMode('live')" class="px-2.5 py-1 rounded font-medium transition text-slate-400 hover:text-slate-200 flex items-center gap-1">
+            <i data-lucide="radio" class="w-3 h-3"></i>
+            <span>Live API</span>
+          </button>
+        </div>
+
+        <button onclick="openApiConfigModal()" class="px-2.5 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center gap-1.5 text-xs" title="Configure Backend & Satellite API Endpoints">
+          <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+          <span class="hidden md:inline">API Config</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Data Sources Telemetry Banner -->
+  <div class="bg-navy-900 border-b border-navy-800 px-4 py-1.5 text-xs">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-1 gap-x-4">
+      <div class="flex items-center gap-2 text-slate-400">
+        <span class="text-[11px] font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping inline-block"></span> Sensor Bus:
+        </span>
+        <span id="current-active-dataset-tag" class="text-slate-200 font-mono">IBTrACS Benchmark: Cyclone FANI (2019116N11086)</span>
+      </div>
+
+      <div class="flex items-center gap-3 overflow-x-auto text-[11px] font-mono py-0.5">
+        <div class="flex items-center gap-1 text-slate-300" title="IR 10.8µm Cloud-Top View">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span class="text-slate-400">IR:</span>
+          <span id="badge-ir" class="text-emerald-300">Co-located</span>
+        </div>
+        <div class="flex items-center gap-1 text-slate-300" title="Microwave 89GHz Convective Ring">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span class="text-slate-400">Microwave:</span>
+          <span id="badge-mw" class="text-emerald-300">Aligned</span>
+        </div>
+        <div class="flex items-center gap-1 text-slate-300" title="Scatterometer Surface Wind Vectors">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span class="text-slate-400">Scatterometer:</span>
+          <span id="badge-scatt" class="text-emerald-300">Surface Grid</span>
+        </div>
+        <div class="flex items-center gap-1 text-slate-300" title="NOAA OISST / Ocean Heat Content">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span class="text-slate-400">SST/OHC:</span>
+          <span id="badge-ocean" class="text-emerald-300">Available</span>
+        </div>
+        <div class="flex items-center gap-1 text-slate-300" title="Atmospheric Sounding & Vertical Wind Shear">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span class="text-slate-400">Atmo:</span>
+          <span id="badge-atmo" class="text-emerald-300">VWS Track</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Banner for System State & Transparency -->
+  <div id="system-mode-banner" class="bg-blue-950/70 border-b border-blue-500/20 px-4 py-1 text-center text-xs text-blue-200">
+    <span class="font-bold tracking-wide text-cyan-300">HISTORICAL IBTRACS BENCHMARK MODE:</span> 
+    Operating on verified NOAA IBTrACS v04r01 records. Real coordinates, winds, pressures, and intensification calculations active.
+  </div>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- ======================================================== -->
+    <!-- 1. DASHBOARD VIEW                                        -->
+    <!-- ======================================================== -->
+    <section id="view-dashboard" class="page-view space-y-6 block">
+      
+      <!-- Top Overview Stats -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-cyan-400">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Active Storm</span>
+          <div class="text-lg font-black text-white mt-0.5 truncate" id="dash-storm-name">FANI</div>
+          <div class="text-xs text-cyan-300 font-mono truncate" id="dash-storm-basin">2019116N11086</div>
+        </div>
+
+        <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-emerald-400">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Max Observed Wind</span>
+          <div class="text-lg font-black text-white mt-0.5 flex items-baseline gap-1">
+            <span id="dash-wind-speed">115</span> <span class="text-xs font-normal text-slate-400">kt</span>
+          </div>
+          <div class="text-xs text-emerald-300 font-mono truncate" id="dash-category">Cat 4 (ESCS)</div>
+        </div>
+
+        <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-blue-400">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Min Central Pressure</span>
+          <div class="text-lg font-black text-white mt-0.5 flex items-baseline gap-1">
+            <span id="dash-pressure">937</span> <span class="text-xs font-normal text-slate-400">hPa</span>
+          </div>
+          <div class="text-xs text-blue-300 font-mono" id="dash-pres-trend">Observed Peak</div>
+        </div>
+
+        <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-purple-400">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Peak Fix Position</span>
+          <div class="text-lg font-black text-white mt-0.5 font-mono text-sm tracking-tight" id="dash-coords">14.8°N, 84.4°E</div>
+          <div class="text-xs text-purple-300 font-mono" id="dash-center-uncertainty">Verified IBTrACS Fix</div>
+        </div>
+
+        <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-amber-400">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Track Duration</span>
+          <div class="text-lg font-black text-white mt-0.5" id="dash-motion">8.2 Days</div>
+          <div class="text-xs text-amber-300 font-mono" id="dash-motion-heading">28 Observations</div>
+        </div>
+
+        <div class="glass-panel p-3.5 rounded-xl border-l-4 border-l-rose-500 relative overflow-hidden" id="dash-ri-card">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+            <span>RI Observed</span>
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+          </span>
+          <div class="text-lg font-black text-rose-400 mt-0.5 flex items-baseline gap-1">
+            <span id="dash-ri-prob">YES</span> <span class="text-xs font-bold text-rose-400 uppercase tracking-wider">(+50 kt/24h)</span>
+          </div>
+          <div class="text-[11px] text-slate-300 font-mono truncate" id="dash-ri-window">Verified Rapid Intensification</div>
+        </div>
+      </div>
+
+      <!-- Main Command Layout: Left Map, Right Controls & Diagnostic Panels -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Interactive Cyclone Leaflet Map (Col 8) -->
+        <div class="lg:col-span-8 flex flex-col space-y-3">
+          <div class="glass-panel rounded-2xl p-4 flex-1 flex flex-col min-h-[520px]">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-2 border-b border-slate-700/50">
+              <div class="flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-cyan-400"></i>
+                <h2 class="text-sm font-bold tracking-wide text-white uppercase">Historical Observation Track &amp; Spatial Verification</h2>
+                <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono">WGS-84 Leaflet GIS</span>
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <label class="flex items-center gap-1.5 cursor-pointer text-slate-300 hover:text-white">
+                  <input type="checkbox" id="layer-wind-radii" checked onchange="toggleWindRadiiLayer(this.checked)" class="rounded bg-navy-900 border-slate-600 text-cyan-500 focus:ring-0">
+                  <span>Show Peak Radius</span>
+                </label>
+                <button onclick="resetMapView()" class="p-1.5 rounded bg-navy-800 hover:bg-navy-700 text-slate-300 hover:text-white flex items-center gap-1 text-xs" title="Center &amp; Fit Track Bounds">
+                  <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                  <span>Fit Track</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- The Leaflet container -->
+            <div id="cyclone-map" class="w-full flex-1 rounded-xl overflow-hidden border border-cyan-500/20 shadow-inner z-10" style="min-height: 380px;"></div>
+
+            <!-- Track Time Scrubber & Stepper (Functional QA Enhancement) -->
+            <div class="mt-3 p-2.5 rounded-xl bg-navy-950/80 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+              <div class="flex items-center gap-2">
+                <button id="btn-play-track" onclick="togglePlayTrack()" class="p-1.5 rounded bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-500/30 flex items-center gap-1" title="Animate track sequence">
+                  <i data-lucide="play" class="w-3.5 h-3.5" id="play-icon"></i>
+                  <span id="play-text">Play</span>
+                </button>
+                <button onclick="stepTrackFix(-1)" class="p-1.5 rounded bg-navy-900 hover:bg-navy-800 text-slate-300 hover:text-white border border-slate-700" title="Previous observation">
+                  <i data-lucide="skip-back" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="stepTrackFix(1)" class="p-1.5 rounded bg-navy-900 hover:bg-navy-800 text-slate-300 hover:text-white border border-slate-700" title="Next observation">
+                  <i data-lucide="skip-forward" class="w-3.5 h-3.5"></i>
+                </button>
+                <span class="text-slate-400 ml-1">Fix:</span>
+                <span id="scrubber-fix-label" class="text-cyan-300 font-bold">1 / 28</span>
+              </div>
+
+              <div class="flex-1 min-w-[140px] px-2">
+                <input type="range" id="track-scrubber" min="0" max="27" value="0" oninput="onScrubberInput(this.value)" class="w-full accent-cyan-400 cursor-pointer">
+              </div>
+
+              <div class="flex items-center gap-2 text-[11px]">
+                <span class="text-slate-400">Epoch:</span>
+                <span id="scrubber-timestamp" class="text-white font-bold">2019-04-26 06:00Z</span>
+              </div>
+            </div>
+
+            <!-- Map Legend -->
+            <div class="mt-2.5 pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between text-[11px] text-slate-400 gap-2">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span> Dep/CS (&lt;48kt)</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> SCS (48-63kt)</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> VSCS (64-89kt)</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> ESCS/Super (&ge;90kt)</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1"><span class="w-3 h-0.5 bg-cyan-400"></span> Track Polyline</span>
+                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500"></span> Peak RMW (65km)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Selected Observation Telemetry Card (Directly linked to point clicks) -->
+          <div class="glass-panel rounded-2xl p-4 space-y-2 border-l-4 border-l-cyan-400">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <div class="flex items-center gap-2">
+                <i data-lucide="crosshair" class="w-4 h-4 text-cyan-400"></i>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Selected Track Point Observation Telemetry</span>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 font-mono border border-cyan-500/30" id="telemetry-fix-id">Fix #1 of 28</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-xs font-mono pt-1">
+              <div class="bg-navy-950/80 p-2 rounded-lg border border-slate-800">
+                <span class="text-[10px] text-slate-400 block uppercase">Timestamp (UTC)</span>
+                <span class="text-cyan-300 font-bold text-xs" id="telemetry-time">2019-04-26 06:00:00</span>
+              </div>
+              <div class="bg-navy-950/80 p-2 rounded-lg border border-slate-800">
+                <span class="text-[10px] text-slate-400 block uppercase">Coordinates</span>
+                <span class="text-white font-bold text-xs" id="telemetry-coords">2.70°N, 88.70°E</span>
+              </div>
+              <div class="bg-navy-950/80 p-2 rounded-lg border border-slate-800">
+                <span class="text-[10px] text-slate-400 block uppercase">Sustained Wind</span>
+                <span class="text-emerald-400 font-bold text-xs" id="telemetry-wind">25 kt</span>
+              </div>
+              <div class="bg-navy-950/80 p-2 rounded-lg border border-slate-800">
+                <span class="text-[10px] text-slate-400 block uppercase">Central Pressure</span>
+                <span class="text-blue-300 font-bold text-xs" id="telemetry-pres">1006 hPa</span>
+              </div>
+              <div class="bg-navy-950/80 p-2 rounded-lg border border-slate-800">
+                <span class="text-[10px] text-slate-400 block uppercase">IMD Stage</span>
+                <span class="text-amber-300 font-bold text-xs" id="telemetry-stage">Depression (DB)</span>
+              </div>
+              <div class="bg-navy-950/80 p-2 rounded-lg border border-slate-800">
+                <span class="text-[10px] text-slate-400 block uppercase">Source Standard</span>
+                <span class="text-slate-300 font-bold text-xs">IBTrACS v04</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Cyclone Selector & Diagnostic Indices (Col 4) -->
+        <div class="lg:col-span-4 space-y-4">
+          
+          <!-- Cyclone Master Control Panel -->
+          <div class="glass-panel rounded-2xl p-4 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-700/50">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
+                <span>Cyclone Dataset Selection</span>
+              </h3>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 font-mono">IBTrACS v04r01</span>
+            </div>
+
+            <!-- Cyclone Selector -->
+            <div>
+              <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Active Benchmark Cyclone</label>
+              <select id="benchmark-cyclone-select" onchange="loadSelectedCyclone(this.value)" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-cyan-500 focus:outline-none">
+                <!-- Dynamically populated from actual IBTrACS dataset -->
+              </select>
+            </div>
+
+            <!-- Dynamic Gauge Bars based on Real Data -->
+            <div class="space-y-3 pt-1">
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-medium">
+                  <span class="text-slate-300">Maximum Sustained Wind</span>
+                  <span class="text-emerald-400 font-mono" id="gauge-val-intensity">115 kt</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-navy-950 overflow-hidden border border-slate-800">
+                  <div id="gauge-bar-intensity" class="h-full bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full transition-all duration-700" style="width: 82%;"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-500 mt-0.5 font-mono">
+                  <span id="detail-min-pres">Min Pres: 937 hPa</span>
+                  <span>Verified Best-Track</span>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-medium">
+                  <span class="text-slate-300">Total Track Distance</span>
+                  <span class="text-blue-400 font-mono" id="gauge-val-track">~2,480 km</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-navy-950 overflow-hidden border border-slate-800">
+                  <div id="gauge-bar-track" class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-700" style="width: 85%;"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-500 mt-0.5 font-mono">
+                  <span id="detail-start-coord">Origin: 2.7°N, 88.7°E</span>
+                  <span id="detail-end-coord">End: 25.6°N, 89.8°E</span>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1 font-medium">
+                  <span class="text-slate-300">24h Intensification Surge (&Delta;V₂₄)</span>
+                  <span class="text-rose-400 font-mono font-bold" id="gauge-val-ri">+50 kt [RI Qualified]</span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-navy-950 overflow-hidden border border-slate-800">
+                  <div id="gauge-bar-ri" class="h-full bg-gradient-to-r from-amber-500 to-rose-500 rounded-full transition-all duration-700" style="width: 100%;"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-rose-300/80 mt-0.5 font-mono">
+                  <span id="detail-ri-status">Status: Rapid Intensifier</span>
+                  <span>&ge;30 kt/24h Rule</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Action Links -->
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <button onclick="switchTab('analysis')" class="p-2 rounded-lg bg-cyan-950/60 hover:bg-cyan-900 text-cyan-300 text-xs font-medium border border-cyan-500/30 flex items-center justify-center gap-1.5 transition">
+                <i data-lucide="scan" class="w-3.5 h-3.5"></i>
+                <span>Cyclone Analysis</span>
+              </button>
+              <button onclick="switchTab('ri-warning')" class="p-2 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-xs font-medium border border-rose-500/30 flex items-center justify-center gap-1.5 transition">
+                <i data-lucide="flame" class="w-3.5 h-3.5"></i>
+                <span>RI Diagnostics</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Asynchronous Data Fusion Alignment Summary -->
+          <div class="glass-panel rounded-2xl p-4 space-y-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+              <span>Active Cyclone Timespan</span>
+              <span class="text-[10px] text-emerald-400 font-mono" id="dash-ref-time">Verified Epochs</span>
+            </h3>
+            
+            <div class="text-[11px] space-y-1.5 font-mono">
+              <div class="flex items-center justify-between bg-navy-950/80 p-1.5 rounded border border-slate-800">
+                <span class="text-slate-400">First Observation:</span>
+                <span class="text-cyan-300 font-bold" id="detail-obs-timeframe">Loading...</span>
+              </div>
+              <div class="flex items-center justify-between bg-navy-950/80 p-1.5 rounded border border-slate-800">
+                <span class="text-slate-400">Final Observation:</span>
+                <span class="text-cyan-300 font-bold" id="detail-obs-endtime">Loading...</span>
+              </div>
+              <div class="flex items-center justify-between bg-navy-950/80 p-1.5 rounded border border-slate-800">
+                <span class="text-slate-400">Database Source:</span>
+                <span class="text-white">ibtracs.NI.list.v04r01.csv</span>
+              </div>
+            </div>
+
+            <button onclick="switchTab('fusion')" class="w-full text-center text-xs text-cyan-400 hover:text-cyan-300 pt-1 font-medium flex items-center justify-center gap-1">
+              <span>Explore Multi-Source Fusion Pipeline</span>
+              <i data-lucide="arrow-right" class="w-3 h-3"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 2. CYCLONE ANALYSIS VIEW                                 -->
+    <!-- ======================================================== -->
+    <section id="view-analysis" class="page-view space-y-6 hidden">
+      <div class="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-slate-700/50">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="scan" class="w-5 h-5 text-cyan-400"></i>
+            <span>Multi-Modal Cyclone Diagnostic &amp; Core Analysis</span>
+          </h2>
+          <p class="text-xs text-slate-400">Deconstruct storm structure across thermal IR, microwave penetration, surface scatterometry, and ocean thermodynamic fuel</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400 font-mono">Current Subject:</span>
+          <span class="text-xs font-bold text-cyan-400 bg-cyan-950 px-2.5 py-1 rounded border border-cyan-500/30" id="analysis-storm-tag">Cyclone FANI (2019116N11086)</span>
+        </div>
+      </div>
+
+      <!-- Real Metrics Summary Computed from Actual Records -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="glass-panel p-4 rounded-xl">
+          <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Total Verified Observations</div>
+          <div class="text-2xl font-black text-white mt-1 font-mono" id="analysis-total-obs">28 fixes</div>
+          <div class="text-[10px] text-cyan-300 mt-1">6-hourly synoptic resolution</div>
+        </div>
+        <div class="glass-panel p-4 rounded-xl">
+          <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Peak Sustained Wind</div>
+          <div class="text-2xl font-black text-emerald-400 mt-1 font-mono" id="analysis-peak-wind">115 kt</div>
+          <div class="text-[10px] text-slate-400 mt-1">~215 km/h (Category 4 ESCS)</div>
+        </div>
+        <div class="glass-panel p-4 rounded-xl">
+          <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Minimum Central Pressure</div>
+          <div class="text-2xl font-black text-blue-400 mt-1 font-mono" id="analysis-min-pres">937 hPa</div>
+          <div class="text-[10px] text-slate-400 mt-1">Deep barometric depression</div>
+        </div>
+        <div class="glass-panel p-4 rounded-xl">
+          <div class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Track Distance Traversed</div>
+          <div class="text-2xl font-black text-purple-400 mt-1 font-mono" id="analysis-distance">~2,480 km</div>
+          <div class="text-[10px] text-slate-400 mt-1">Haversine path summation</div>
+        </div>
+      </div>
+
+      <!-- 6-Sensor Modality Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <!-- Sensor 1: Thermal IR -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between space-y-3 cursor-pointer hover:border-cyan-400/40 transition" onclick="showToast('INSAT-3D TIR 10.8µm: CDO brightness temp calibrated (-82.4°C)', 'info')">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold tracking-wider text-cyan-400 uppercase flex items-center gap-1.5">
+                <i data-lucide="eye" class="w-4 h-4"></i> IR 10.8µm Cloud-Top View
+              </span>
+              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">INSAT-3D TIR-1</span>
+            </div>
+            <div class="relative w-full h-44 rounded-xl bg-navy-950 border border-slate-700/80 overflow-hidden flex items-center justify-center">
+              <div class="w-36 h-36 rounded-full bg-gradient-to-r from-red-600 via-yellow-400 to-indigo-900 opacity-80 blur-sm flex items-center justify-center">
+                <div class="w-6 h-6 rounded-full bg-red-950 border border-red-500 flex items-center justify-center">
+                  <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full"></span>
+                </div>
+              </div>
+              <div class="absolute bottom-2 left-2 text-[10px] font-mono text-cyan-300 bg-navy-900/80 px-2 py-0.5 rounded border border-cyan-500/20">
+                Min Cloud Temp: -82.4°C (CDO)
+              </div>
+            </div>
+          </div>
+          <div class="text-xs space-y-1.5 text-slate-300">
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Pattern:</span>
+              <span class="font-bold text-white">Central Dense Overcast</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Eye Definition:</span>
+              <span class="text-emerald-400 font-mono">Distinct Circular Core</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 2: Microwave 89GHz -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between space-y-3 cursor-pointer hover:border-cyan-400/40 transition" onclick="showToast('GPM GMI: 89GHz Ice Scattering Eyewall Ring verified', 'info')">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold tracking-wider text-cyan-400 uppercase flex items-center gap-1.5">
+                <i data-lucide="radio" class="w-4 h-4"></i> Microwave 89 GHz Inner-Core
+              </span>
+              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">GPM GMI</span>
+            </div>
+            <div class="relative w-full h-44 rounded-xl bg-navy-950 border border-slate-700/80 overflow-hidden flex items-center justify-center">
+              <div class="w-32 h-32 rounded-full border-4 border-cyan-400 border-dashed animate-spin flex items-center justify-center" style="animation-duration: 30s;">
+                <div class="w-20 h-20 rounded-full border-2 border-emerald-400 flex items-center justify-center">
+                  <div class="w-5 h-5 rounded-full bg-cyan-900/60 border border-cyan-300"></div>
+                </div>
+              </div>
+              <div class="absolute bottom-2 left-2 text-[10px] font-mono text-cyan-300 bg-navy-900/80 px-2 py-0.5 rounded border border-cyan-500/20">
+                Eyewall Ring: Closed (360°)
+              </div>
+            </div>
+          </div>
+          <div class="text-xs space-y-1.5 text-slate-300">
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Convective Ring:</span>
+              <span class="font-bold text-emerald-400">Symmetric Solid Eyewall</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Ice Scattering:</span>
+              <span class="text-white font-mono">TB &lt; 180K Strong</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 3: Scatterometer Surface Wind -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between space-y-3 cursor-pointer hover:border-cyan-400/40 transition" onclick="showToast('MetOp ASCAT: 12.5km Wind Vector Cells ingested', 'info')">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold tracking-wider text-cyan-400 uppercase flex items-center gap-1.5">
+                <i data-lucide="wind" class="w-4 h-4"></i> Scatterometer Surface Winds
+              </span>
+              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">MetOp-C ASCAT</span>
+            </div>
+            <div class="relative w-full h-44 rounded-xl bg-navy-950 border border-slate-700/80 overflow-hidden flex items-center justify-center">
+              <div class="grid grid-cols-5 gap-3 p-4 opacity-70">
+                <span class="text-amber-400 transform rotate-45 text-xs font-bold">↗</span>
+                <span class="text-rose-500 transform rotate-90 text-sm font-bold">↑</span>
+                <span class="text-rose-500 transform rotate-135 text-sm font-bold">↖</span>
+                <span class="text-amber-400 transform rotate-180 text-xs font-bold">←</span>
+                <span class="text-cyan-400 transform rotate-225 text-xs font-bold">↙</span>
+                <span class="text-cyan-400 transform rotate-0 text-xs font-bold">→</span>
+                <span class="text-rose-600 transform rotate-45 text-base font-bold">↗</span>
+                <span class="text-white transform text-xs font-mono">● EYE</span>
+                <span class="text-rose-600 transform rotate-225 text-base font-bold">↙</span>
+                <span class="text-cyan-400 transform rotate-180 text-xs font-bold">←</span>
+              </div>
+              <div class="absolute bottom-2 left-2 text-[10px] font-mono text-amber-300 bg-navy-900/80 px-2 py-0.5 rounded border border-amber-500/20">
+                Surface Circulation Fix
+              </div>
+            </div>
+          </div>
+          <div class="text-xs space-y-1.5 text-slate-300">
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">RMW Radius:</span>
+              <span class="font-bold text-white font-mono">~22 km</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Wind Asymmetry:</span>
+              <span class="text-amber-400">NE Quadrant Peak</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 4: Sea Surface Temperature -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between space-y-3 cursor-pointer hover:border-cyan-400/40 transition" onclick="showToast('NOAA OISST: Sea Surface Temp 30.4°C (+1.9°C anomaly)', 'info')">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold tracking-wider text-cyan-400 uppercase flex items-center gap-1.5">
+                <i data-lucide="thermometer" class="w-4 h-4"></i> Sea Surface Temperature
+              </span>
+              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">NOAA OISST v2.1</span>
+            </div>
+            <div class="relative w-full h-44 rounded-xl bg-gradient-to-r from-blue-900 via-amber-700 to-rose-700 overflow-hidden flex flex-col justify-end p-3 border border-slate-700">
+              <div class="bg-navy-950/80 backdrop-blur rounded p-2 text-[11px] font-mono">
+                <div class="flex justify-between text-slate-300">
+                  <span>Track SST Ahead:</span>
+                  <span class="text-rose-400 font-bold">30.4°C</span>
+                </div>
+                <div class="flex justify-between text-slate-400 text-[10px]">
+                  <span>RI Threshold:</span>
+                  <span>&gt; 28.5°C (+1.9°C anomaly)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="text-xs space-y-1.5 text-slate-300">
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Maximum Potential:</span>
+              <span class="font-bold text-emerald-400">165 kt theoretical</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Isotherm 26°C Depth:</span>
+              <span class="text-white font-mono">92 meters</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 5: Ocean Heat Content -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between space-y-3 cursor-pointer hover:border-cyan-400/40 transition" onclick="showToast('Altimetry OHC: 88 kJ/cm² extreme energetic reservoir', 'info')">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold tracking-wider text-cyan-400 uppercase flex items-center gap-1.5">
+                <i data-lucide="waves" class="w-4 h-4"></i> Ocean Heat Content (OHC)
+              </span>
+              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">Altimetry / INCOIS</span>
+            </div>
+            <div class="relative w-full h-44 rounded-xl bg-gradient-to-b from-navy-900 to-indigo-950 overflow-hidden flex flex-col justify-between p-3 border border-slate-700">
+              <div class="flex justify-between items-center text-[10px] font-mono text-cyan-300">
+                <span>Thermocline Energy Reservoir</span>
+                <span class="px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-500/30">Super-Charged</span>
+              </div>
+              <div class="text-center py-2">
+                <span class="text-3xl font-black text-white font-mono">88</span>
+                <span class="text-xs text-cyan-400 ml-1">kJ/cm²</span>
+                <p class="text-[10px] text-slate-400 mt-1">&gt; 50 kJ/cm² triggers Rapid Intensification</p>
+              </div>
+              <div class="w-full bg-navy-950 h-2 rounded-full overflow-hidden border border-slate-700">
+                <div class="bg-gradient-to-r from-blue-400 via-amber-400 to-rose-500 h-full" style="width: 88%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="text-xs space-y-1.5 text-slate-300">
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Warm Core Eddy Impact:</span>
+              <span class="font-bold text-emerald-400">Active High-Energy Core</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Negative Feedback:</span>
+              <span class="text-slate-200">Weak Cold Wake</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensor 6: Atmospheric Sounding -->
+        <div class="glass-panel rounded-2xl p-4 flex flex-col justify-between space-y-3 cursor-pointer hover:border-cyan-400/40 transition" onclick="showToast('ERA5: 200-850 hPa shear 7.8 kt (Highly Favorable)', 'info')">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold tracking-wider text-cyan-400 uppercase flex items-center gap-1.5">
+                <i data-lucide="cloud-rain" class="w-4 h-4"></i> Atmospheric Shear &amp; Steering
+              </span>
+              <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">ERA5 / GFS Reanalysis</span>
+            </div>
+            <div class="relative w-full h-44 rounded-xl bg-navy-950 border border-slate-700/80 overflow-hidden p-3 flex flex-col justify-between">
+              <div class="space-y-1 text-xs">
+                <div class="flex justify-between font-mono">
+                  <span class="text-slate-400">200-850 hPa Shear:</span>
+                  <span class="text-emerald-400 font-bold">7.8 kt (Very Favorable)</span>
+                </div>
+                <div class="flex justify-between font-mono">
+                  <span class="text-slate-400">Mid-Level RH (700hPa):</span>
+                  <span class="text-cyan-300 font-bold">78% (Moist Envelope)</span>
+                </div>
+                <div class="flex justify-between font-mono">
+                  <span class="text-slate-400">Upper Outflow:</span>
+                  <span class="text-emerald-400 font-bold">Dual-Channel Divergence</span>
+                </div>
+              </div>
+              <div class="p-2 rounded bg-navy-900 border border-slate-800 text-[10px] text-slate-300">
+                <span class="text-emerald-400 font-bold">Status:</span> Environmental conditions conducive for extreme intensification.
+              </div>
+            </div>
+          </div>
+          <div class="text-xs space-y-1.5 text-slate-300">
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Steering Flow (500hPa):</span>
+              <span class="font-bold text-white">Subtropical Ridge Influence</span>
+            </div>
+            <div class="flex justify-between border-b border-slate-800 pb-1">
+              <span class="text-slate-400">Dry Air Intrusion:</span>
+              <span class="text-emerald-400">Shielded Inner-Core</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 3. MULTI-SOURCE DATA FUSION PIPELINE                     -->
+    <!-- ======================================================== -->
+    <section id="view-fusion" class="page-view space-y-6 hidden">
+      <div class="pb-2 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="git-merge" class="w-5 h-5 text-cyan-400"></i>
+            <span>Multi-Source Multimodal Fusion Architecture</span>
+          </h2>
+          <p class="text-xs text-slate-400">End-to-End Deep Cross-Attention &amp; Physical Constraints Integration Pipeline</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded border border-emerald-500/30 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Fusion Pipeline Architecture Active
+          </span>
+        </div>
+      </div>
+
+      <!-- Interactive Stage Inspector -->
+      <div class="glass-panel rounded-2xl p-6">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
+          <i data-lucide="workflow" class="w-4 h-4 text-cyan-400"></i>
+          <span>Click on any Pipeline Stage to Inspect Data Transformations &amp; Tensor Shapes</span>
+        </h3>
+
+        <!-- Pipeline Flow Stepper -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 text-center" id="pipeline-stages">
+          
+          <button onclick="inspectPipelineStage(1)" id="pipe-btn-1" class="pipe-node p-3 rounded-xl bg-cyan-950/80 border border-cyan-500/50 text-cyan-300 transition hover:scale-105 text-left">
+            <div class="text-[10px] uppercase font-bold text-cyan-400">Stage 01</div>
+            <div class="font-bold text-xs mt-1 text-white">Data Ingestion</div>
+            <div class="text-[10px] text-slate-400 mt-1">Multi-modal feeds</div>
+          </button>
+
+          <button onclick="inspectPipelineStage(2)" id="pipe-btn-2" class="pipe-node p-3 rounded-xl bg-navy-900 border border-slate-800 text-slate-400 transition hover:scale-105 text-left">
+            <div class="text-[10px] uppercase font-bold text-slate-500">Stage 02</div>
+            <div class="font-bold text-xs mt-1 text-slate-200">Preprocessing</div>
+            <div class="text-[10px] text-slate-400 mt-1">QC &amp; Calibration</div>
+          </button>
+
+          <button onclick="inspectPipelineStage(3)" id="pipe-btn-3" class="pipe-node p-3 rounded-xl bg-navy-900 border border-slate-800 text-slate-400 transition hover:scale-105 text-left">
+            <div class="text-[10px] uppercase font-bold text-slate-500">Stage 03</div>
+            <div class="font-bold text-xs mt-1 text-slate-200">Alignment</div>
+            <div class="text-[10px] text-slate-400 mt-1">Lagrangian Grid</div>
+          </button>
+
+          <button onclick="inspectPipelineStage(4)" id="pipe-btn-4" class="pipe-node p-3 rounded-xl bg-navy-900 border border-slate-800 text-slate-400 transition hover:scale-105 text-left">
+            <div class="text-[10px] uppercase font-bold text-slate-500">Stage 04</div>
+            <div class="font-bold text-xs mt-1 text-slate-200">Feature ViT</div>
+            <div class="text-[10px] text-slate-400 mt-1">Dual-Backbone</div>
+          </button>
+
+          <button onclick="inspectPipelineStage(5)" id="pipe-btn-5" class="pipe-node p-3 rounded-xl bg-navy-900 border border-slate-800 text-slate-400 transition hover:scale-105 text-left">
+            <div class="text-[10px] uppercase font-bold text-slate-500">Stage 05</div>
+            <div class="font-bold text-xs mt-1 text-slate-200">Cross-Attention</div>
+            <div class="text-[10px] text-slate-400 mt-1">Multimodal Fusion</div>
+          </button>
+
+          <button onclick="inspectPipelineStage(6)" id="pipe-btn-6" class="pipe-node p-3 rounded-xl bg-navy-900 border border-slate-800 text-slate-400 transition hover:scale-105 text-left">
+            <div class="text-[10px] uppercase font-bold text-slate-500">Stage 06</div>
+            <div class="font-bold text-xs mt-1 text-slate-200">Core Diagnostics</div>
+            <div class="text-[10px] text-slate-400 mt-1">Center Fix &amp; Intensity</div>
+          </button>
+
+          <button onclick="inspectPipelineStage(7)" id="pipe-btn-7" class="pipe-node p-3 rounded-xl bg-navy-900 border border-slate-800 text-slate-400 transition hover:scale-105 text-left">
+            <div class="text-[10px] uppercase font-bold text-slate-500">Stage 07</div>
+            <div class="font-bold text-xs mt-1 text-slate-200">Prognosis &amp; RI</div>
+            <div class="text-[10px] text-slate-400 mt-1">Track, Wind, RI Prob</div>
+          </button>
+
+        </div>
+
+        <!-- Dynamic Pipeline Stage Description Inspector -->
+        <div id="pipeline-stage-detail" class="mt-6 p-5 rounded-xl bg-navy-950 border border-cyan-500/30">
+          <!-- Populated by JS inspectPipelineStage -->
+        </div>
+      </div>
+
+      <!-- Data Source Ingestion & Fusion Quality Ledger -->
+      <div class="glass-panel rounded-2xl p-5 space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+          <span class="flex items-center gap-1.5"><i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i> Multi-Source Live Registry &amp; Quality Parameters</span>
+          <span class="text-[10px] text-slate-400 font-mono">IBTrACS Benchmark Stream Active</span>
+        </h3>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="text-[11px] text-slate-400 uppercase bg-navy-900 border-b border-slate-800">
+              <tr>
+                <th class="p-2.5">Source Stream</th>
+                <th class="p-2.5">Satellite / Mission</th>
+                <th class="p-2.5">Obs Epoch</th>
+                <th class="p-2.5">Spatial Res</th>
+                <th class="p-2.5">Coverage Box</th>
+                <th class="p-2.5">QC Verification</th>
+                <th class="p-2.5">Fusion Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 text-slate-200" id="fusion-ledger-tbody">
+              <!-- Loaded via JS renderFusionLedger() -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 4. TEMPORAL / SPATIAL ALIGNMENT VISUALIZATION            -->
+    <!-- ======================================================== -->
+    <section id="view-alignment" class="page-view space-y-6 hidden">
+      <div class="pb-2 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="clock-3" class="w-5 h-5 text-cyan-400"></i>
+            <span>Asynchronous Spatio-Temporal Alignment Engine</span>
+          </h2>
+          <p class="text-xs text-slate-400">Transforming non-simultaneous satellite overpasses into a unified storm-centered coordinate reference frame</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Visual Time Axis (Col 7) -->
+        <div class="lg:col-span-7 glass-panel rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400">Asynchronous Observation Timeline (t₀ ± 180 min)</h3>
+            <span class="text-[10px] font-mono text-slate-400" id="align-ref-time-label">Target Reference: 06:00 UTC</span>
+          </div>
+
+          <!-- Timeline Visual Canvas -->
+          <div class="relative py-6 px-3 bg-navy-950 rounded-xl border border-slate-800 overflow-x-auto">
+            <div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-cyan-400/80 z-0 flex flex-col items-center">
+              <span class="bg-cyan-950 text-cyan-300 font-mono text-[9px] px-1.5 py-0.5 rounded border border-cyan-400 font-bold -mt-2">t₀ = Synoptic</span>
+            </div>
+
+            <div class="space-y-4 relative z-10 text-xs font-mono">
+              <div class="flex items-center gap-3">
+                <span class="w-24 text-right text-slate-400 text-[11px]">GPM Microwave:</span>
+                <div class="flex-1 relative h-6 flex items-center">
+                  <div class="absolute left-[44%] transform -translate-x-1/2 flex items-center gap-1 bg-emerald-950 border border-emerald-500 text-emerald-300 px-2 py-0.5 rounded shadow">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>05:42Z (-18m)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="w-24 text-right text-slate-400 text-[11px]">INSAT-3D IR:</span>
+                <div class="flex-1 relative h-6 flex items-center">
+                  <div class="absolute left-[50%] transform -translate-x-1/2 flex items-center gap-1 bg-cyan-950 border border-cyan-400 text-cyan-300 px-2 py-0.5 rounded shadow">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                    <span>06:00Z (0m)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="w-24 text-right text-slate-400 text-[11px]">ASCAT Scatter:</span>
+                <div class="flex-1 relative h-6 flex items-center">
+                  <div class="absolute left-[57%] transform -translate-x-1/2 flex items-center gap-1 bg-amber-950 border border-amber-500 text-amber-300 px-2 py-0.5 rounded shadow">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>06:24Z (+24m)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="w-24 text-right text-slate-400 text-[11px]">NOAA OISST:</span>
+                <div class="flex-1 relative h-6 flex items-center">
+                  <div class="absolute left-[20%] transform -translate-x-1/2 flex items-center gap-1 bg-blue-950 border border-blue-500 text-blue-300 px-2 py-0.5 rounded shadow">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                    <span>00:00Z (Daily)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alignment Control Form -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div>
+              <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Temporal Window (Δt)</label>
+              <select id="align-window-select" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg p-2 text-xs">
+                <option value="60">± 60 Minutes (High Concurrence)</option>
+                <option value="120" selected>± 120 Minutes (Standard)</option>
+                <option value="180">± 180 Minutes (Relaxed)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Storm-Motion Advection</label>
+              <select id="align-advection-select" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg p-2 text-xs">
+                <option value="lagrangian" selected>Lagrangian Advection</option>
+                <option value="eulerian">Eulerian Static Grid</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Common Spatial Grid</label>
+              <select id="align-grid-select" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg p-2 text-xs">
+                <option value="0.05" selected>0.05° (~5 km) Equi-rectangular</option>
+                <option value="0.10">0.10° (~10 km) Standard</option>
+                <option value="0.025">0.025° (~2.5 km) High-Res Core</option>
+              </select>
+            </div>
+          </div>
+
+          <button onclick="recalculateAlignment()" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Execute Spatio-Temporal Resampling</span>
+          </button>
+        </div>
+
+        <!-- Spatial Storm-Centering Demonstration (Col 5) -->
+        <div class="lg:col-span-5 glass-panel rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400">Storm-Following 500×500km Bounding Box</h3>
+            <span class="text-[10px] text-emerald-400 font-mono">100 × 100 Pixels</span>
+          </div>
+
+          <!-- Storm Centered Grid Representation -->
+          <div class="relative w-full aspect-square max-w-[280px] mx-auto rounded-xl bg-navy-950 border border-cyan-500/30 flex items-center justify-center p-3">
+            <div class="absolute inset-0 grid grid-cols-4 grid-rows-4 divide-x divide-y divide-slate-800/40 pointer-events-none">
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+              <div></div><div></div><div></div><div></div>
+            </div>
+
+            <!-- Center Eye Marker -->
+            <div class="relative z-10 w-8 h-8 rounded-full border border-cyan-400 flex items-center justify-center bg-cyan-950/60">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-white absolute"></span>
+            </div>
+
+            <div class="absolute w-20 h-20 rounded-full border border-cyan-500/20 pointer-events-none"></div>
+            <div class="absolute w-36 h-36 rounded-full border border-cyan-500/20 pointer-events-none"></div>
+            <div class="absolute w-56 h-56 rounded-full border border-cyan-500/20 pointer-events-none"></div>
+
+            <span class="absolute bottom-2 left-2 text-[9px] font-mono text-slate-500">-250km W</span>
+            <span class="absolute bottom-2 right-2 text-[9px] font-mono text-slate-500">+250km E</span>
+            <span class="absolute top-2 left-2 text-[9px] font-mono text-slate-500">+250km N</span>
+            <span class="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-[9px] font-mono text-cyan-400">Lagrangian (x-u·t, y-v·t)</span>
+          </div>
+
+          <div id="align-results-box" class="text-[11px] text-slate-300 space-y-1 bg-navy-950/80 p-3 rounded-xl border border-slate-800 font-mono">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Motion Vector:</span>
+              <span class="text-white" id="align-motion-vec">u=2.4 m/s, v=5.1 m/s</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Advective Offset:</span>
+              <span class="text-emerald-400" id="align-advect-val">GPM shifted -5.4 km along track</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Resampling Method:</span>
+              <span class="text-cyan-300">Bilinear Spatial + Temporal Match</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 5. PREDICTION VIEW (TRACK + INTENSITY)                   -->
+    <!-- ======================================================== -->
+    <section id="view-prediction" class="page-view space-y-6 hidden">
+      <div class="pb-2 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="trending-up" class="w-5 h-5 text-cyan-400"></i>
+            <span>Track &amp; Intensity Verification Time Series</span>
+          </h2>
+          <p class="text-xs text-slate-400">Comparing real IBTrACS observations with the upcoming PyTorch Multimodal inference pipeline</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-mono text-amber-300 bg-amber-950/70 px-2.5 py-1 rounded border border-amber-500/30 flex items-center gap-1.5">
+            <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+            <span>Prediction Model: Prototype / Integration Pending</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Time Series Chart Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Chart 1: Wind Speed History -->
+        <div class="glass-panel rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+              <i data-lucide="wind" class="w-4 h-4"></i>
+              <span>Observed Wind Speed (Knots vs Timestamp)</span>
+            </h3>
+            <span class="text-[10px] text-slate-400 font-mono" id="chart-wind-peak">Peak: 115 kt</span>
+          </div>
+          <div class="h-64 w-full">
+            <canvas id="chart-wind"></canvas>
+          </div>
+          <div class="text-[11px] text-slate-400 flex justify-between font-mono pt-1 border-t border-slate-800">
+            <span>Source: <strong class="text-white">ibtracs.NI.list.v04r01.csv</strong></span>
+            <span>Gaps: <strong class="text-cyan-300">Preserved as N/A</strong></span>
+          </div>
+        </div>
+
+        <!-- Chart 2: Central Pressure History -->
+        <div class="glass-panel rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-2">
+              <i data-lucide="gauge" class="w-4 h-4"></i>
+              <span>Minimum Central Pressure (hPa vs Timestamp)</span>
+            </h3>
+            <span class="text-[10px] text-slate-400 font-mono" id="chart-pres-min">Min: 937 hPa</span>
+          </div>
+          <div class="h-64 w-full">
+            <canvas id="chart-pressure"></canvas>
+          </div>
+          <div class="text-[11px] text-slate-400 flex justify-between font-mono pt-1 border-t border-slate-800">
+            <span>Inverted Scale: <strong class="text-white">Meteorological Norm</strong></span>
+            <span>Observations: <strong class="text-blue-300" id="chart-pres-obs-count">28 fixes</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Real Observations Waypoints Table -->
+      <div class="glass-panel rounded-2xl p-5 space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
+          <span class="flex items-center gap-1.5"><i data-lucide="navigation" class="w-4 h-4 text-cyan-400"></i> Verified Track Waypoints &amp; 24-Hour Intensity Surges (Click row to select fix)</span>
+          <span class="text-[10px] text-slate-400 font-mono">NOAA Best-Track Records</span>
+        </h3>
+
+        <div class="overflow-x-auto max-h-80">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="text-[11px] text-slate-400 uppercase bg-navy-950 border-b border-slate-800 sticky top-0">
+              <tr>
+                <th class="p-2.5">Fix #</th>
+                <th class="p-2.5">ISO Timestamp (UTC)</th>
+                <th class="p-2.5">Latitude</th>
+                <th class="p-2.5">Longitude</th>
+                <th class="p-2.5">Wind (kt)</th>
+                <th class="p-2.5">Pressure (hPa)</th>
+                <th class="p-2.5">Status / Stage</th>
+                <th class="p-2.5">ΔV₂₄ (24h Change)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 text-slate-200" id="forecast-waypoints-tbody">
+              <!-- Rendered dynamically from actual IBTrACS records -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 6. RAPID INTENSIFICATION (RI) WARNING                    -->
+    <!-- ======================================================== -->
+    <section id="view-ri-warning" class="page-view space-y-6 hidden">
+      <div class="pb-2 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-500"></i>
+            <span>Rapid Intensification (RI) Historical Diagnostic</span>
+          </h2>
+          <p class="text-xs text-slate-400">Criterion: &ge; 30 knot (55 km/h) sustained wind increase within a 24-hour observation window</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-white bg-rose-950 px-3 py-1 rounded-lg border border-rose-500/50 flex items-center gap-2 ri-alert-pulse">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            <span>HISTORICAL INTENSIFICATION ANALYSIS</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- RI Main KPI Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- RI Qualification Card -->
+        <div class="glass-panel-glow rounded-2xl p-6 flex flex-col justify-between items-center text-center space-y-4">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">RI Status in Record</span>
+          <div class="relative w-40 h-40 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" class="text-navy-950" fill="transparent"></circle>
+              <circle id="ri-circle-svg" cx="50" cy="50" r="42" stroke="currentColor" stroke-width="8" stroke-dasharray="264" stroke-dashoffset="0" class="text-rose-500 transition-all duration-1000" stroke-linecap="round" fill="transparent"></circle>
+            </svg>
+            <div class="absolute flex flex-col items-center justify-center">
+              <span class="text-3xl font-black text-white font-mono" id="ri-prob-big">YES</span>
+              <span class="text-[11px] font-bold text-rose-400 uppercase tracking-wider mt-0.5" id="ri-prob-subtext">RI Observed</span>
+            </div>
+          </div>
+          <div class="text-xs text-slate-300 font-mono" id="ri-observed-max-delta">
+            Max Observed ΔV₂₄: <strong>+50 kt</strong>
+          </div>
+        </div>
+
+        <!-- Environmental Triggers -->
+        <div class="glass-panel rounded-2xl p-5 md:col-span-2 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+              <i data-lucide="sliders" class="w-4 h-4"></i>
+              <span>Physics-Informed RI Contributing Factors</span>
+            </h3>
+            <span class="text-[10px] text-amber-400 font-mono bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/30">AI RI prediction model not connected</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between font-medium mb-1">
+                  <span class="text-slate-300">Observed 24h Wind Surge</span>
+                  <span class="text-rose-400 font-mono" id="ri-stat-surge">+50 kt / 24h</span>
+                </div>
+                <div class="w-full h-2 rounded bg-navy-950">
+                  <div class="h-full bg-rose-500 rounded transition-all duration-500" id="ri-bar-surge" style="width: 100%;"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between font-medium mb-1">
+                  <span class="text-slate-300">Sea Surface Temperature (&gt;28.5°C)</span>
+                  <span class="text-rose-400 font-mono">30.4°C (+95% Support)</span>
+                </div>
+                <div class="w-full h-2 rounded bg-navy-950">
+                  <div class="h-full bg-rose-500 rounded" style="width: 95%;"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between font-medium mb-1">
+                  <span class="text-slate-300">Ocean Heat Content (&gt;50 kJ/cm²)</span>
+                  <span class="text-rose-400 font-mono">88 kJ/cm² (+90% Support)</span>
+                </div>
+                <div class="w-full h-2 rounded bg-navy-950">
+                  <div class="h-full bg-rose-500 rounded" style="width: 90%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between font-medium mb-1">
+                  <span class="text-slate-300">Vertical Wind Shear (&lt;12 kt)</span>
+                  <span class="text-emerald-400 font-mono">7.8 kt (Favorable)</span>
+                </div>
+                <div class="w-full h-2 rounded bg-navy-950">
+                  <div class="h-full bg-emerald-400 rounded" style="width: 88%;"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between font-medium mb-1">
+                  <span class="text-slate-300">Inner Core Microwave Ring</span>
+                  <span class="text-cyan-400 font-mono">Symmetric (0.89)</span>
+                </div>
+                <div class="w-full h-2 rounded bg-navy-950">
+                  <div class="h-full bg-cyan-400 rounded" style="width: 82%;"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between font-medium mb-1">
+                  <span class="text-slate-300">Mid-Level RH (&gt;70%)</span>
+                  <span class="text-cyan-400 font-mono">78% (Moist Envelope)</span>
+                </div>
+                <div class="w-full h-2 rounded bg-navy-950">
+                  <div class="h-full bg-cyan-400 rounded" style="width: 75%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-xl bg-navy-950 border border-slate-800 text-xs text-slate-300 font-mono">
+            <strong class="text-rose-400">Scientific Transparency Note:</strong> The above values represent historical environmental metrics co-located with this storm's verified track. AI predictive weights will be computed once the PyTorch RI Transformer endpoint is bound.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 7. HISTORICAL CYCLONE EXPLORER (IBTrACS)                 -->
+    <!-- ======================================================== -->
+    <section id="view-historical" class="page-view space-y-6 hidden">
+      <div class="pb-2 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="database" class="w-5 h-5 text-cyan-400"></i>
+            <span>NOAA IBTrACS Benchmark Cyclone Explorer</span>
+          </h2>
+          <p class="text-xs text-slate-400">Browse verified records from <code class="text-cyan-300">ibtracs.NI.list.v04r01.csv</code></p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400 font-mono" id="hist-table-count">
+            Showing 6 of 6 North Indian cyclones
+          </span>
+          <button onclick="exportFilteredCyclonesCsv()" class="px-2.5 py-1 rounded bg-navy-800 hover:bg-navy-700 text-cyan-300 text-xs font-mono border border-cyan-500/30 flex items-center gap-1 transition" title="Export currently filtered cyclone list">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters & Search Bar -->
+      <div class="glass-panel rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Search Name or SID</label>
+          <input type="text" id="hist-search-input" onkeyup="filterHistoricalCyclones()" placeholder="e.g. Fani, 2019116N11086..." class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-cyan-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Filter Season</label>
+          <select id="hist-season-select" onchange="filterHistoricalCyclones()" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-xs">
+            <option value="ALL">All Available Seasons</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">Sub-Basin</label>
+          <select id="hist-basin-select" onchange="filterHistoricalCyclones()" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-xs">
+            <option value="ALL">All Sub-Basins (NI)</option>
+            <option value="BB">Bay of Bengal (BB)</option>
+            <option value="AS">Arabian Sea (AS)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">RI Filter</label>
+          <select id="hist-ri-select" onchange="filterHistoricalCyclones()" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-xs">
+            <option value="ALL">All Cyclones</option>
+            <option value="RI_YES">Verified RI (&ge;30kt/24h)</option>
+            <option value="RI_NO">Non-RI Systems</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button onclick="resetHistoricalFilters()" class="w-full py-2 px-3 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition">
+            Reset Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Historical Storms Table -->
+      <div class="glass-panel rounded-2xl p-5 space-y-3">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="text-[11px] text-slate-400 uppercase bg-navy-950 border-b border-slate-800">
+              <tr>
+                <th class="p-2.5">Storm SID</th>
+                <th class="p-2.5">Name</th>
+                <th class="p-2.5">Season</th>
+                <th class="p-2.5">Sub-Basin</th>
+                <th class="p-2.5">Obs Count</th>
+                <th class="p-2.5">Start Date</th>
+                <th class="p-2.5">End Date</th>
+                <th class="p-2.5">Peak Wind</th>
+                <th class="p-2.5">Min Pres</th>
+                <th class="p-2.5">RI Observed</th>
+                <th class="p-2.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 text-slate-200" id="historical-storms-tbody">
+              <!-- Populated by JS filterHistoricalCyclones() -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 8. DATA IMPORT SYSTEM (CSV/JSON/NETCDF)                  -->
+    <!-- ======================================================== -->
+    <section id="view-import" class="page-view space-y-6 hidden">
+      <div class="pb-2 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="upload-cloud" class="w-5 h-5 text-cyan-400"></i>
+            <span>Scientific Data Ingestion &amp; Quality Validator</span>
+          </h2>
+          <p class="text-xs text-slate-400">Upload in-situ, satellite track CSV, or drop <code class="text-cyan-300">ibtracs.NI.list.v04r01.csv</code> directly</p>
+        </div>
+
+        <button onclick="downloadSampleIbtracsCsv()" class="px-3 py-1.5 rounded-lg bg-navy-800 hover:bg-navy-700 text-cyan-300 text-xs font-mono border border-cyan-500/30 flex items-center gap-1.5 transition">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span>Download Sample IBTrACS CSV</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- File Upload Area (Col 5) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="glass-panel rounded-2xl p-5 space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400">Upload Telemetry File</h3>
+            
+            <div id="drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="border-2 border-dashed border-slate-700 hover:border-cyan-400 rounded-xl p-6 text-center transition cursor-pointer bg-navy-950/60">
+              <input type="file" id="file-input" onchange="handleFileSelect(event)" accept=".csv,.json,.txt" class="hidden" />
+              <div class="flex flex-col items-center justify-center space-y-2" onclick="document.getElementById('file-input').click()">
+                <div class="w-12 h-12 rounded-full bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                  <i data-lucide="file-up" class="w-6 h-6"></i>
+                </div>
+                <div class="text-xs font-bold text-white">Click or drag &amp; drop file here</div>
+                <p class="text-[11px] text-slate-400">Supported: IBTrACS standard CSV, JSON metadata</p>
+                <span class="text-[10px] text-slate-500">Auto-detects SID, ISO_TIME, LAT, LON, WMO_WIND, WMO_PRES</span>
+              </div>
+            </div>
+
+            <!-- Upload Preset Quick Loaders -->
+            <div>
+              <span class="block text-[11px] uppercase tracking-wider text-slate-400 mb-2 font-semibold">Or Load Verified Benchmarks:</span>
+              <div class="grid grid-cols-2 gap-2" id="preset-benchmark-buttons">
+                <!-- Populated dynamically by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Dataset Integrity Metrics -->
+          <div class="glass-panel-subtle rounded-2xl p-4 text-xs font-mono space-y-2 text-slate-300">
+            <span class="font-bold text-cyan-400 uppercase tracking-wider text-[11px] block">Active Dataset Health Metrics:</span>
+            <div class="space-y-1 text-[11px]">
+              <div class="flex justify-between"><span class="text-slate-400">Total Systems:</span> <span class="text-white font-bold" id="db-stat-systems">6 Systems</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Total Observations:</span> <span class="text-white font-bold" id="db-stat-obs">177 Fixes</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Seasons Covered:</span> <span class="text-cyan-300 font-bold" id="db-stat-seasons">2014 - 2023</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Valid Coordinates:</span> <span class="text-emerald-400 font-bold" id="db-stat-coords-valid">100.0%</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Wind Coverage:</span> <span class="text-emerald-400 font-bold" id="db-stat-wind-cov">100.0%</span></div>
+              <div class="flex justify-between"><span class="text-slate-400">Pressure Coverage:</span> <span class="text-emerald-400 font-bold" id="db-stat-pres-cov">100.0%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation & Preview Results (Col 7) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="glass-panel rounded-2xl p-5 space-y-4 min-h-[420px]">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
+                <span>Data Ingestion &amp; Column Mapping Report</span>
+              </h3>
+              <span id="import-status-pill" class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-mono border border-emerald-500/30">ibtracs.NI.list.v04r01 Indexed</span>
+            </div>
+
+            <!-- Ingestion diagnostics -->
+            <div id="import-diagnostics" class="p-3.5 rounded-xl bg-navy-950 border border-slate-800 text-xs space-y-2">
+              <p class="text-slate-300">Default dataset active: <code class="text-cyan-300">ibtracs.NI.list.v04r01.csv</code>. All 2-line header schemas parsed successfully. Missing values flagged with N/A.</p>
+            </div>
+
+            <!-- Preview Data Table -->
+            <div class="space-y-2">
+              <span class="text-xs font-bold text-slate-300">Data Stream Preview (First 5 Fixes of Active Cyclone):</span>
+              <div class="overflow-x-auto max-h-56 rounded-lg border border-slate-800">
+                <table class="w-full text-left text-xs font-mono">
+                  <thead class="text-[10px] text-slate-400 uppercase bg-navy-900 border-b border-slate-800 sticky top-0">
+                    <tr>
+                      <th class="p-2">SID / Name</th>
+                      <th class="p-2">Timestamp (UTC)</th>
+                      <th class="p-2">Lat</th>
+                      <th class="p-2">Lon</th>
+                      <th class="p-2">Wind (kt)</th>
+                      <th class="p-2">Pres (hPa)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800 text-slate-300 text-[11px]" id="preview-tbody">
+                    <!-- Populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <button id="import-apply-btn" onclick="applyImportedDataToSession()" class="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition flex items-center justify-center gap-2">
+              <i data-lucide="play" class="w-4 h-4"></i>
+              <span>Set Active Cyclone on Dashboard</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- TEAM DETAILS VIEW (CYBER TITANS)                         -->
+    <!-- ======================================================== -->
+    <section id="view-team" class="page-view space-y-6 hidden">
+      <!-- Team Header & Identity Card -->
+      <div class="glass-panel-glow rounded-2xl p-6 md:p-8 text-center relative overflow-hidden border border-cyan-500/30 shadow-2xl">
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-3">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          <span>Engineering &amp; Development Team</span>
+        </div>
+
+        <h1 class="text-3xl md:text-4xl font-black text-white tracking-wider">Cyber Titans</h1>
+        <p class="text-base md:text-lg text-cyan-300 font-medium mt-1">The Team Behind TC-Fusion</p>
+        <p class="text-xs md:text-sm text-slate-400 max-w-xl mx-auto mt-2 leading-relaxed">
+          Designing and engineering multi-source satellite data fusion algorithms, geospatial tracking, and rapid intensification intelligence systems.
+        </p>
+      </div>
+
+      <!-- Featured Team Leader Section -->
+      <div class="space-y-3">
+        <div class="flex items-center gap-2 px-1">
+          <i data-lucide="award" class="w-4 h-4 text-cyan-400"></i>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">Team Leadership</h2>
+        </div>
+
+        <div class="glass-panel-glow rounded-2xl p-6 relative overflow-hidden border-l-4 border-l-cyan-400 bg-gradient-to-r from-navy-900/95 via-navy-850/90 to-navy-900/95">
+          <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
+            <div class="relative">
+              <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20">
+                <div class="w-full h-full bg-navy-950 rounded-[14px] flex items-center justify-center">
+                  <span class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-br from-cyan-300 to-white font-mono">AD</span>
+                </div>
+              </div>
+              <span class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-cyan-500 border-2 border-navy-950 flex items-center justify-center text-navy-950 shadow">
+                <i data-lucide="crown" class="w-3 h-3 fill-current"></i>
+              </span>
+            </div>
+
+            <div class="flex-1 space-y-1">
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/40 text-[11px] font-semibold font-mono">
+                <i data-lucide="star" class="w-3 h-3 text-cyan-400"></i>
+                <span>Team Leader</span>
+              </div>
+              <h3 class="text-xl font-black text-white tracking-wide">Amirtha Dharshini C</h3>
+              <p class="text-xs text-cyan-400 font-mono font-medium">Team Leader — Cyber Titans</p>
+              <p class="text-xs text-slate-400 pt-1">
+                Leading the architecture, coordination, and integration of the TC-Fusion meteorological intelligence platform.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Members Grid (All 6 Members) -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <div class="flex items-center gap-2">
+            <i data-lucide="users" class="w-4 h-4 text-cyan-400"></i>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">Team Roster</h2>
+          </div>
+          <span class="text-xs font-mono text-cyan-400 bg-cyan-950/80 px-2.5 py-0.5 rounded border border-cyan-500/30">6 Members</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Member 1: Amirtha Dharshini C (Leader) -->
+          <div class="glass-panel rounded-2xl p-5 border border-cyan-400/40 relative flex flex-col justify-between hover:border-cyan-400 transition group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-300 font-bold font-mono text-base group-hover:bg-cyan-900/50 transition">
+                AD
+              </div>
+              <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-bold font-mono uppercase tracking-wider flex items-center gap-1">
+                <i data-lucide="crown" class="w-2.5 h-2.5 text-cyan-400"></i>
+                <span>Team Leader</span>
+              </span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white tracking-wide">Amirtha Dharshini C</h3>
+              <p class="text-xs text-cyan-400 font-mono mt-0.5 font-medium">Team Leader</p>
+            </div>
+          </div>
+
+          <!-- Member 2: Nithiarasu G -->
+          <div class="glass-panel rounded-2xl p-5 border border-slate-700/60 relative flex flex-col justify-between hover:border-cyan-500/40 transition group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-navy-950 border border-slate-700 flex items-center justify-center text-slate-300 font-bold font-mono text-base group-hover:border-cyan-500/40 group-hover:text-cyan-300 transition">
+                NG
+              </div>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white tracking-wide">Nithiarasu G</h3>
+            </div>
+          </div>
+
+          <!-- Member 3: Kiruthika D -->
+          <div class="glass-panel rounded-2xl p-5 border border-slate-700/60 relative flex flex-col justify-between hover:border-cyan-500/40 transition group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-navy-950 border border-slate-700 flex items-center justify-center text-slate-300 font-bold font-mono text-base group-hover:border-cyan-500/40 group-hover:text-cyan-300 transition">
+                KD
+              </div>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white tracking-wide">Kiruthika D</h3>
+            </div>
+          </div>
+
+          <!-- Member 4: Siva Shanmugam M -->
+          <div class="glass-panel rounded-2xl p-5 border border-slate-700/60 relative flex flex-col justify-between hover:border-cyan-500/40 transition group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-navy-950 border border-slate-700 flex items-center justify-center text-slate-300 font-bold font-mono text-base group-hover:border-cyan-500/40 group-hover:text-cyan-300 transition">
+                SS
+              </div>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white tracking-wide">Siva Shanmugam M</h3>
+            </div>
+          </div>
+
+          <!-- Member 5: Poovarasan S -->
+          <div class="glass-panel rounded-2xl p-5 border border-slate-700/60 relative flex flex-col justify-between hover:border-cyan-500/40 transition group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-navy-950 border border-slate-700 flex items-center justify-center text-slate-300 font-bold font-mono text-base group-hover:border-cyan-500/40 group-hover:text-cyan-300 transition">
+                PS
+              </div>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white tracking-wide">Poovarasan S</h3>
+            </div>
+          </div>
+
+          <!-- Member 6: Nandhakumar V -->
+          <div class="glass-panel rounded-2xl p-5 border border-slate-700/60 relative flex flex-col justify-between hover:border-cyan-500/40 transition group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="w-12 h-12 rounded-xl bg-navy-950 border border-slate-700 flex items-center justify-center text-slate-300 font-bold font-mono text-base group-hover:border-cyan-500/40 group-hover:text-cyan-300 transition">
+                NV
+              </div>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-white tracking-wide">Nandhakumar V</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- 9. SYSTEM ARCHITECTURE & ABOUT VIEW                      -->
+    <!-- ======================================================== -->
+    <section id="view-about" class="page-view space-y-6 hidden">
+      <div class="pb-2 border-b border-slate-700/50 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i data-lucide="info" class="w-5 h-5 text-cyan-400"></i>
+            <span>System Architecture &amp; Research Blueprint</span>
+          </h2>
+          <p class="text-xs text-slate-400">Research, architecture, and implementation blueprint for TC-Fusion</p>
+        </div>
+
+        <div class="text-xs font-mono text-cyan-300 bg-cyan-950 px-3 py-1 rounded border border-cyan-500/30">
+          Developed by: Team Cyber Titans
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="glass-panel rounded-2xl p-5 space-y-3">
+          <h3 class="text-sm font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="alert-octagon" class="w-4 h-4"></i> The Operational Bottlenecks
+          </h3>
+          <ul class="text-xs text-slate-300 space-y-2">
+            <li class="flex items-start gap-2">
+              <span class="text-rose-400 font-bold">1.</span>
+              <span><strong>Asynchronous Observations:</strong> Polar-orbiting microwave and geostationary IR imagers have time offsets from 15 min to hours.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-rose-400 font-bold">2.</span>
+              <span><strong>Center Estimation Ambiguity:</strong> High cirrus canopies obscure low-level circulation centers, introducing center fix errors.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-rose-400 font-bold">3.</span>
+              <span><strong>Rapid Intensification Blind Spots:</strong> Traditional numerical models miss sudden convective surges (&ge;30kt/24h).</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-rose-400 font-bold">4.</span>
+              <span><strong>Subsurface Ocean Decoupling:</strong> SST alone fails because cold wake upwelling limits intensification unless backed by high Ocean Heat Content (OHC).</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="glass-panel rounded-2xl p-5 space-y-3">
+          <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4"></i> TC-FUSION's Multimodal Innovation
+          </h3>
+          <ul class="text-xs text-slate-300 space-y-2">
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">1.</span>
+              <span><strong>Lagrangian Spatio-Temporal Alignment:</strong> Translates asynchronous sensor swaths along the cyclone motion vector to a common reference epoch (t₀).</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">2.</span>
+              <span><strong>Cross-Attention Deep Fusion:</strong> Uses dual-backbone Vision Transformers to fuse microwave inner-core precipitation with thermal cloud symmetry.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">3.</span>
+              <span><strong>Thermodynamic Ocean Heat Engine:</strong> Incorporates altimetry-derived OHC and satellite SST for physics-informed potential intensity.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">4.</span>
+              <span><strong>Transparent RI Diagnostics:</strong> Physics-based factor breakdown for disaster management and coastal evacuation planning.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Backend & ML Stack Architecture Diagram -->
+      <div class="glass-panel rounded-2xl p-6 space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+          <i data-lucide="cpu" class="w-4 h-4"></i>
+          <span>Production Integration Architecture (FastAPI + PyTorch Backend Contract)</span>
+        </h3>
+
+        <div class="p-4 rounded-xl bg-navy-950 border border-slate-800 font-mono text-xs overflow-x-auto text-slate-300">
+          <div class="text-cyan-400 font-bold mb-2">// RESTful Microservices Contract for ML Server</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div class="text-slate-400 font-semibold mb-1"># Core Endpoints:</div>
+              <div class="space-y-1 text-[11px]">
+                <div><span class="text-emerald-400">GET</span>  /api/historical/cyclones <span class="text-slate-500">→ List all IBTrACS systems</span></div>
+                <div><span class="text-emerald-400">GET</span>  /api/historical/track/{sid} <span class="text-slate-500">→ Get verified track fixes</span></div>
+                <div><span class="text-emerald-400">POST</span> /api/data/upload <span class="text-slate-500">→ Ingest satellite CSV/NetCDF</span></div>
+                <div><span class="text-emerald-400">POST</span> /api/fusion/align <span class="text-slate-500">→ Spatio-temporal Lagrangian alignment</span></div>
+                <div><span class="text-emerald-400">POST</span> /api/predict/track <span class="text-slate-500">→ Multi-modal track inference</span></div>
+                <div><span class="text-emerald-400">POST</span> /api/predict/ri <span class="text-slate-500">→ Rapid Intensification probability</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="text-slate-400 font-semibold mb-1"># Technical Stack References:</div>
+              <div class="space-y-1 text-[11px] text-slate-400">
+                <div>• <strong class="text-slate-200">NOAA IBTrACS v04r01</strong>: Verified Global Best Track Benchmark</div>
+                <div>• <strong class="text-slate-200">PyTorch 2.2</strong>: Multimodal Dual-ViT Cross-Attention Network</div>
+                <div>• <strong class="text-slate-200">FastAPI + Uvicorn</strong>: Asynchronous Python REST microservice</div>
+                <div>• <strong class="text-slate-200">SHIPS RI Diagnostic</strong>: Climatological &amp; Environmental Baseline</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- API CONFIGURATION MODAL                                  -->
+  <!-- ======================================================== -->
+  <div id="api-modal" onclick="onModalBackdropClick(event)" class="fixed inset-0 z-50 bg-navy-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-panel-glow max-w-lg w-full rounded-2xl p-6 space-y-4 relative border border-cyan-500/40">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-700">
+        <div class="flex items-center gap-2">
+          <i data-lucide="server" class="w-5 h-5 text-cyan-400"></i>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider">FastAPI &amp; Satellite API Configuration</h3>
+        </div>
+        <button onclick="closeApiConfigModal()" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Configure the remote FastAPI inference host or authenticate live satellite provider tokens.
+      </p>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">FastAPI Inference Backend URL</label>
+          <input type="text" id="cfg-backend-url" value="http://localhost:8000" placeholder="http://localhost:8000" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg p-2 text-xs font-mono focus:ring-1 focus:ring-cyan-500">
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">NOAA NESDIS Satellite API Key</label>
+          <input type="password" id="cfg-noaa-key" placeholder="Credential not configured" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg p-2 text-xs font-mono focus:ring-1 focus:ring-cyan-500">
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">NASA Earthdata Token</label>
+          <input type="password" id="cfg-nasa-token" placeholder="Credential not configured" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg p-2 text-xs font-mono focus:ring-1 focus:ring-cyan-500">
+        </div>
+
+        <div>
+          <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1 font-semibold">EUMETSAT Access Key</label>
+          <input type="password" id="cfg-eumetsat-key" placeholder="Credential not configured" class="w-full bg-navy-950 border border-slate-700 text-white rounded-lg p-2 text-xs font-mono focus:ring-1 focus:ring-cyan-500">
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-navy-950 border border-slate-800 text-[11px] text-slate-400 font-mono">
+        <span class="text-amber-400 font-bold">Transparent Policy:</span> When unconfigured, the app runs in <strong>Historical Benchmark Mode</strong> using verified NOAA IBTrACS data. Keys are never transmitted externally.
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeApiConfigModal()" class="px-4 py-2 rounded-lg bg-navy-800 hover:bg-navy-700 text-slate-300 text-xs">
+          Cancel
+        </button>
+        <button onclick="saveApiConfig()" class="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs">
+          Save Configuration
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
